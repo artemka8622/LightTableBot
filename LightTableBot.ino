@@ -42,35 +42,89 @@ float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#define WIFI_SSID "mynet3"
-#define WIFI_PASS "utsenuta"
-#define BOT_TOKEN "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E"
+#define USE_CLIENTSSL true  
+#include <AsyncTelegram2.h>
+// Timezone definition
+#include <time.h>
+#define MYTZ "CET-1CEST,M3.5.0,M10.5.0/3"
 
-#include <FastBot.h>
-FastBot bot(BOT_TOKEN);
-                            
+#include <ESP8266WiFi.h>
+BearSSL::WiFiClientSecure client;
+BearSSL::Session   session;
+BearSSL::X509List  certificate(telegram_cert);
+AsyncTelegram2 myBot(client);
+
+const char* ssid  =  "mynet3";     // SSID WiFi network
+const char* pass  =  "utsenuta";     // Password  WiFi network
+const char* token =  "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";  // Telegram token    
+
+// Target user can find it's own userid with the bot @JsonDumpBot
+// https://t.me/JsonDumpBot
+int64_t userid = 294499886;  
+
+
+// Name of public channel (your bot must be in admin group)
+const char* channel = "@tolentino_cotesta";
+                      
 void setupBot()
 {
+  // Sync time with NTP, to check properly Telegram certificate
+  configTime(MYTZ, "time.google.com", "time.windows.com", "pool.ntp.org");
+  //Set certficate, session and some other base client properies
+  client.setSession(&session);
+  client.setTrustAnchors(&certificate);
+  client.setBufferSizes(1024, 1024);
+    // Set the Telegram bot properies
+  myBot.setUpdateTime(2000);
+  myBot.setTelegramToken(token);
+
+  // Check if all things are ok
+  Serial.print("\nTest Telegram connection... ");
+  myBot.begin() ? Serial.println("OK") : Serial.println("NOK");
+
+  char welcome_msg[128];
+  snprintf(welcome_msg, 128, "BOT @%s online\n/help all commands avalaible.", myBot.getBotName());
+
+  // Send a message to specific user who has started your bot
+  myBot.sendTo(userid, welcome_msg);
+  
 }
 
 int prev_1 = 0;
 void loopBot(){
   int curr_milis = millis();
+  TBMessage msg;
   if(curr_milis - prev_1 > 1000)
-  {
+  {  
     prev_1 = curr_milis;
-  }
+    Serial.println("Loop");
+    // if there is an incoming message...
+    if (myBot.getNewMessage(msg)) {    
+        // Send a message to your public channel
+        String message ;
+        message += "Message from @";
+        message += myBot.getBotName();
+        message += ":\n";
+        message += msg.text;
+        Serial.println(message);
+        myBot.sendToChannel(channel, message, true);
+    
+        // echo the received message
+        myBot.sendMessage(msg, msg.text);
+      }      
+   }
 }
 
 void connectWiFi() {
   delay(2000);
   Serial.println();
 
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pass);
+  delay(500);
   while (WiFi.status() != WL_CONNECTED) {
+    Serial.print('.');
     delay(500);
-    Serial.print(".");
-    if (millis() > 15000) ESP.restart();
   }
   Serial.println("Connected");
 }
