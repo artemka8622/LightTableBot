@@ -79,7 +79,6 @@ void setupBot()
 int prev_1 = 0;
 void loopBot(){
   int curr_milis = millis();
-  TBMessage msg;
   if (millis() - bot_lasttime > BOT_MTBS)
   {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
