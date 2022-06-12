@@ -1,6 +1,8 @@
 #include "FastLED.h"          // библиотека для работы с лентой
 #define LED_COUNT 104          // число светодиодов в кольце/ленте
 #define LED_DT 4             // пин, куда подключен DIN ленты
+#include <ESP8266WiFi.h>
+#include <EEPROM.h>
 
 int max_bright = 200;          // максимальная яркость (0 - 255)
 boolean adapt_light = 0;       // адаптивная подсветка (1 - включить, 0 - выключить)
@@ -42,63 +44,101 @@ float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#define WIFI_SSID "mynet3"
-#define WIFI_PASS "utsenuta"
-#define BOT_TOKEN "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E"
-
-#include <FastBot.h>
-FastBot bot(BOT_TOKEN);
-                            
+const char* ssid  =  "mynet3";     // SSID WiFi network
+const char* pass  =  "utsenuta";     // Password  WiFi network
+const char* token =  "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";  // Telegram token   
+                  
 void setupBot()
 {
-  connectWiFi();
-  bot.attach(newMsg);
+  
 }
 
-int prev_1 = 0;
+int bot_lasttime = 0;
 void loopBot(){
   int curr_milis = millis();
-  if(curr_milis - prev_1 > 1000)
+  if (curr_milis - bot_lasttime > 1000)
   {
-    prev_1 = curr_milis;
-    bot.tick();
+    bot_lasttime = curr_milis;
+    Serial.println("CPU load - ");
   }
-}
-
-// обработчик сообщений
-void newMsg(FB_msg& msg) {
-  // выводим всю информацию о сообщении
-  Serial.println(msg.toString());
-
-  // отправить сообщение обратно
-  bot.sendMessage(msg.text, msg.chatID);  
 }
 
 void connectWiFi() {
-  delay(2000);
   Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
 
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
+     would try to act as both a client and an access-point and could cause
+     network-issues with your other WiFi-devices on your WiFi-network. */
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pass);
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    if (millis() > 15000) ESP.restart();
   }
-  Serial.println("Connected");
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
+int curr_red = 150;
+int curr_green = 100;
+int curr_blue = 100;
+int curr_bright = 200;
+
+void ReadSettings(){
+  int position_ = 0;
+  curr_red = EEPROM.read(position_);
+  position_ += sizeof(curr_red);
+  curr_green = EEPROM.read(position_);
+  position_ += sizeof(curr_red);
+  curr_blue = EEPROM.read(position_);
+  position_ += sizeof(curr_red);  
+  curr_bright = EEPROM.read(position_);
+  position_ += sizeof(curr_bright);
+  EEPROM.get(position_, ledMode);  
+  Serial.println("ReadSettings red-" +String(curr_red)+ " green- "+ String(curr_green)+ " blue- "+ String(curr_blue)+ " bright- "+String(curr_bright)+ " mode - " +String(ledMode));
+}
+
+void WriteSettings(){
+  int position_ = 0;
+  EEPROM.put(position_, curr_red);
+  position_ += sizeof(curr_red);
+  EEPROM.put(position_,curr_green);
+  position_ += sizeof(curr_red);
+  EEPROM.put(position_,curr_blue);
+  position_ += sizeof(curr_red);  
+  EEPROM.put(position_,curr_bright);  
+  position_ += sizeof(curr_bright);
+  EEPROM.put(position_, ledMode);  
+  delay(500);
+  if (EEPROM.commit()) {
+    Serial.println("EEPROM successfully committed");
+  } else {
+    Serial.println("ERROR! EEPROM commit failed");
+  }
+  Serial.println("WriteSettings " + String(curr_red)+ " - "+ String(curr_green)+ " - "+ String(curr_blue)+ " - "+String(curr_bright)+ " - " + String(ledMode));
+}
 
 void setup() {
   // initialize the Serial
+  delay(500);
   Serial.begin(115200);
-  
+  EEPROM.begin(512);
+  ReadSettings();
+  LEDS.setBrightness(curr_bright);  // ограничить максимальную яркость
+  LEDS.addLeds<WS2812, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
+  one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
+  LEDS.show(); 
+    
   connectWiFi();
-  setupBot();
-  LEDS.setBrightness(max_bright);  // ограничить максимальную яркость
-  LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
-  one_color_all(0, 0, 0);          // погасить все светодиоды
-  LEDS.show();                     // отослать команду   
+  setupBot();  
 }
 
 void loop() {
@@ -113,12 +153,6 @@ void one_color_all(int cred, int cgrn, int cblu) {       //-SET ALL LEDS TO ONE 
 }
 
 void loop2() {
-  if (millis() - last_change > change_time) {
-    change_time = random(5000, 20000);                // получаем новое случайное время до следующей смены режима
-    ledMode = fav_modes[random(0, num_modes - 1)];    // получаем новый случайный номер следующего режима
-    change_mode(ledMode);                             // меняем режим через change_mode (там для каждого режима стоят цвета и задержки)
-    last_change = millis();
-  }
   switch (ledMode) {
     case 999: break;                           // пазуа
     case  2: rainbow_fade(); break;            // плавная смена цветов всей ленты
