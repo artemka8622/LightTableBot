@@ -42,37 +42,84 @@ float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
+
+// Wifi network station credentials
 #define WIFI_SSID "mynet3"
-#define WIFI_PASS "utsenuta"
+#define WIFI_PASSWORD "utsenuta"
+// Telegram BOT Token (Get from Botfather)
 #define BOT_TOKEN "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E"
 
-#include <FastBot.h>
-FastBot bot(BOT_TOKEN);
-                            
+const unsigned long BOT_MTBS = 1000; // mean time between scan messages
+
+X509List cert(TELEGRAM_CERTIFICATE_ROOT);
+WiFiClientSecure secured_client;
+UniversalTelegramBot bot(BOT_TOKEN, secured_client);
+unsigned long bot_lasttime; // last time messages' scan has been done
+
+// Name of public channel (your bot must be in admin group)
+const char* channel = "@tolentino_cotesta";
+
+void handleNewMessages(int numNewMessages)
+{
+  for (int i = 0; i < numNewMessages; i++)
+  {
+    bot.sendMessage(bot.messages[i].chat_id, bot.messages[i].text, "");
+  }
+}
+
+                      
 void setupBot()
 {
+  
 }
 
 int prev_1 = 0;
 void loopBot(){
   int curr_milis = millis();
-  if(curr_milis - prev_1 > 1000)
+  TBMessage msg;
+  if (millis() - bot_lasttime > BOT_MTBS)
   {
-    prev_1 = curr_milis;
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+
+    while (numNewMessages)
+    {
+      Serial.println("got response");
+      handleNewMessages(numNewMessages);
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
+
+    bot_lasttime = millis();
   }
 }
 
 void connectWiFi() {
-  delay(2000);
-  Serial.println();
-
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+  // attempt to connect to Wifi network:
+  Serial.print("Connecting to Wifi SSID ");
+  Serial.print(WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  secured_client.setTrustAnchors(&cert); // Add root certificate for api.telegram.org
+  
+  while (WiFi.status() != WL_CONNECTED)
+  {
     Serial.print(".");
-    if (millis() > 15000) ESP.restart();
+    delay(500);
   }
-  Serial.println("Connected");
+  Serial.print("\nWiFi connected. IP address: ");
+  Serial.println(WiFi.localIP());
+
+  Serial.print("Retrieving time: ");
+  configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
+  time_t now = time(nullptr);
+  while (now < 24 * 3600)
+  {
+    Serial.print(".");
+    delay(100);
+    now = time(nullptr);
+  }
+  Serial.println(now);
 }
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
