@@ -62,6 +62,8 @@ int lcount = 0;              //-ANOTHER COUNTING VAR
 const char* ssid  =  "mynet3";     // SSID WiFi network
 const char* pass  =  "utsenuta";     // Password  WiFi network
 const char* token =  "5474412217:AAG7xnhvtgcQCRsm1EthSDKhILhpRBULU6g";  // Telegram token   
+#define CHAT_ID "294499886"
+
 #include <FastBot.h>
 FastBot bot(token);
 
@@ -74,7 +76,9 @@ void newMsg(FB_msg& msg) {
 void setupBot()
 {
   connectWiFi();
+  bot.setChatID(CHAT_ID);
   bot.attach(newMsg);
+  InlineMenu();
 }
 
 int bot_lasttime = 0;
@@ -237,7 +241,6 @@ void setup() {
   LEDS.setBrightness(curr_bright);  // ограничить максимальную яркость
   LEDS.addLeds<WS2812, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
   UdapteCollor();
-  connectWiFi();
   setupBot();  
 }
 
