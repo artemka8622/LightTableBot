@@ -44,9 +44,12 @@ float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
+#include "CTBot.h"
 const char* ssid  =  "mynet3";     // SSID WiFi network
 const char* pass  =  "utsenuta";     // Password  WiFi network
-const char* token =  "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";  // Telegram token   
+const char* token =  "5474412217:AAG7xnhvtgcQCRsm1EthSDKhILhpRBULU6g";  // Telegram token   
+CTBot myBot;
+CTBotInlineKeyboard myKbd;  // custom inline keyboard object helper
                   
 void setupBot()
 {
@@ -65,6 +68,7 @@ void setupBot()
 
 int bot_lasttime = 0;
 void loopBot(){
+  TBMessage msg;
   int curr_milis = millis();
   if (curr_milis - bot_lasttime > 1000)
   {
