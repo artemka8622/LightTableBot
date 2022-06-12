@@ -1,6 +1,8 @@
 #include "FastLED.h"          // библиотека для работы с лентой
 #define LED_COUNT 104          // число светодиодов в кольце/ленте
 #define LED_DT 4             // пин, куда подключен DIN ленты
+#include <ESP8266WiFi.h>
+#include <EEPROM.h>
 
 int max_bright = 200;          // максимальная яркость (0 - 255)
 boolean adapt_light = 0;       // адаптивная подсветка (1 - включить, 0 - выключить)
@@ -42,97 +44,83 @@ float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
-#include <UniversalTelegramBot.h>
-
-// Wifi network station credentials
-#define WIFI_SSID "mynet3"
-#define WIFI_PASSWORD "utsenuta"
-// Telegram BOT Token (Get from Botfather)
-#define BOT_TOKEN "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E"
-
-const unsigned long BOT_MTBS = 1000; // mean time between scan messages
-
-X509List cert(TELEGRAM_CERTIFICATE_ROOT);
-WiFiClientSecure secured_client;
-UniversalTelegramBot bot(BOT_TOKEN, secured_client);
-unsigned long bot_lasttime; // last time messages' scan has been done
-
-// Name of public channel (your bot must be in admin group)
-const char* channel = "@tolentino_cotesta";
-
-void handleNewMessages(int numNewMessages)
-{
-  for (int i = 0; i < numNewMessages; i++)
-  {
-    bot.sendMessage(bot.messages[i].chat_id, bot.messages[i].text, "");
-  }
-}
-
-                      
+const char* ssid  =  "mynet3";     // SSID WiFi network
+const char* pass  =  "utsenuta";     // Password  WiFi network
+const char* token =  "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";  // Telegram token   
+                  
 void setupBot()
 {
   
 }
 
-int prev_1 = 0;
+int bot_lasttime = 0;
 void loopBot(){
   int curr_milis = millis();
-  if (millis() - bot_lasttime > BOT_MTBS)
+  if (millis() - bot_lasttime > 1000)
   {
-    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-    while (numNewMessages)
-    {
-      Serial.println("got response");
-      handleNewMessages(numNewMessages);
-      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-    }
-
-    bot_lasttime = millis();
   }
 }
 
 void connectWiFi() {
-  // attempt to connect to Wifi network:
-  Serial.print("Connecting to Wifi SSID ");
-  Serial.print(WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  secured_client.setTrustAnchors(&cert); // Add root certificate for api.telegram.org
-  
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(".");
+  Serial.println();
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pass);
+  delay(500);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print('.');
     delay(500);
   }
-  Serial.print("\nWiFi connected. IP address: ");
-  Serial.println(WiFi.localIP());
-
-  Serial.print("Retrieving time: ");
-  configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
-  time_t now = time(nullptr);
-  while (now < 24 * 3600)
-  {
-    Serial.print(".");
-    delay(100);
-    now = time(nullptr);
-  }
-  Serial.println(now);
+  Serial.println("Connected");
 }
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
+int curr_red = 0;
+int curr_green = 0;
+int curr_blue = 0;
+int curr_bright = 0;
+
+void ReadSettings(){
+  int position_ = 0;
+  curr_red = EEPROM.read(position_);
+  position_ += sizeof(curr_red);
+  curr_green = EEPROM.read(position_);
+  position_ += sizeof(curr_red);
+  curr_blue = EEPROM.read(position_);
+  position_ += sizeof(curr_red);
+  
+  curr_bright = EEPROM.read(position_);
+  position_ += sizeof(curr_bright);
+  ledMode = EEPROM.read(position_);  
+}
+
+void WriteSettings(){
+  int position_ = 0;
+  EEPROM.write(position_, curr_red);
+  position_ += sizeof(curr_red);
+  EEPROM.write(position_,curr_green);
+  position_ += sizeof(curr_red);
+  EEPROM.write(position_,curr_blue);
+  position_ += sizeof(curr_red);  
+  EEPROM.write(position_,curr_bright);
+  position_ += sizeof(curr_bright);
+  EEPROM.write(position_, ledMode);  
+  EEPROM.commit();
+}
 
 void setup() {
   // initialize the Serial
   Serial.begin(115200);
+  EEPROM.begin(512);
+  ReadSettings();
+  LEDS.setBrightness(curr_bright);  // ограничить максимальную яркость
+  LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
+  one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
+  LEDS.show(); 
   
   connectWiFi();
   setupBot();
-  LEDS.setBrightness(max_bright);  // ограничить максимальную яркость
-  LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
-  one_color_all(0, 0, 0);          // погасить все светодиоды
-  LEDS.show();                     // отослать команду   
 }
 
 void loop() {
