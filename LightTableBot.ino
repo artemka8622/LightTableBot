@@ -90,13 +90,14 @@ void setupBot()
 int bot_lasttime = 0;
 void loopBot(){
   int curr_milis = millis();
-  if (curr_milis - bot_lasttime > 1000)
+  if (curr_milis - bot_lasttime > 300)
   {
     bot_lasttime = curr_milis;
     Serial.println("CPU load - ");
-  }
-  bot.tick();
-  LEDS.show();
+    FastLED.show();
+  } 
+  bot.tick(); 
+  delay(50);
 }
 
 void connectWiFi() {
@@ -126,7 +127,9 @@ void InlineMenu(){
 
 void UdapteCollor(){
   one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
+  LEDS.setBrightness(curr_bright); 
   LEDS.show(); 
+  LEDS.delay(10); 
 }
 
 void ReadSettings(){
@@ -204,11 +207,11 @@ void CheckCommand(String callbackQueryData, String  text_){
     UdapteCollor();   
     WriteSettings();
   }else if (callbackQueryData.equals(BRIGHT_PLUS)) {
-    curr_bright -= 10; 
+    curr_bright += 10; 
     UdapteCollor();   
     WriteSettings();
   } else if (callbackQueryData.equals(BRIGHT_MINUS)) {
-    curr_bright += 10; 
+    curr_bright -= 10; 
     UdapteCollor();   
     WriteSettings();
   }
@@ -231,7 +234,7 @@ void CheckCommand(String callbackQueryData, String  text_){
     callbackQueryData = text_.substring(5);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     String bright = callbackQueryData.substring(firstClosingBracket + 1);
-    curr_bright =  bright.toInt();
+    curr_bright =  bright.toInt();    
     UdapteCollor();   
     WriteSettings();
   }
