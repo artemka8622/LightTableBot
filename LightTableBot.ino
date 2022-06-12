@@ -52,7 +52,6 @@ FastBot bot(BOT_TOKEN);
 void setupBot()
 {
   connectWiFi();
-
   bot.attach(newMsg);
 }
 
@@ -76,7 +75,7 @@ void newMsg(FB_msg& msg) {
 }
 
 void connectWiFi() {
-  delay(500);
+  delay(2000);
   Serial.println();
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -95,6 +94,7 @@ void setup() {
   Serial.begin(115200);
   
   connectWiFi();
+  setupBot();
   LEDS.setBrightness(max_bright);  // ограничить максимальную яркость
   LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
   one_color_all(0, 0, 0);          // погасить все светодиоды
