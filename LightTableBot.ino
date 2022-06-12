@@ -55,9 +55,6 @@ uint8_t led = 2;            // the onboard ESP8266 LED.
                             // If you have a NodeMCU you can use the BUILTIN_LED pin
                             // (replace 2 with BUILTIN_LED) 
                             // ATTENTION: this led use inverted logic
-
-                            
-
 void setup() {
   // initialize the Serial
   Serial.begin(115200);
@@ -79,19 +76,15 @@ void setup() {
   else
     Serial.println("\ntestConnection NOK");
 
-  // set the pin connected to the LED to act as output pin
-  pinMode(led, OUTPUT);
-  digitalWrite(led, HIGH); // turn off the led (inverted logic!)
-
   // inline keyboard customization
   // add a query button to the first row of the inline keyboard
-  myKbd.addButton("LIGHT ON", LIGHT_ON_CALLBACK, CTBotKeyboardButtonQuery);
+  //myKbd.addButton("LIGHT ON", LIGHT_ON_CALLBACK, CTBotKeyboardButtonQuery);
   // add another query button to the first row of the inline keyboard
-  myKbd.addButton("LIGHT OFF", LIGHT_OFF_CALLBACK, CTBotKeyboardButtonQuery);
+  //myKbd.addButton("LIGHT OFF", LIGHT_OFF_CALLBACK, CTBotKeyboardButtonQuery);
   // add a new empty button row
-  myKbd.addRow();
+  //myKbd.addRow();
   // add a URL button to the second row of the inline keyboard
-  myKbd.addButton("see docs", "https://github.com/shurillu/CTBot", CTBotKeyboardButtonURL);
+  //myKbd.addButton("see docs", "https://github.com/shurillu/CTBot", CTBotKeyboardButtonURL);
   
 }
 
@@ -104,33 +97,9 @@ void loop() {
   if(curr_milis - prev > 1000)
   {
     prev = curr_milis;
-    // if there is an incoming message...
-    if (myBot.getNewMessage(msg)) {
-      // check what kind of message I received
-      if (msg.messageType == CTBotMessageText) {
-        // received a text message
-        if (msg.text.equalsIgnoreCase("show keyboard")) {
-          // the user is asking to show the inline keyboard --> show it
-          myBot.sendMessage(msg.sender.id, "Inline Keyboard", myKbd);
-        }
-        else {
-          // the user write anithing else --> show a hint message
-          myBot.sendMessage(msg.sender.id, "Try 'show keyboard'");
-        }
-      } else if (msg.messageType == CTBotMessageQuery) {
-        // received a callback query message
-        if (msg.callbackQueryData.equals(LIGHT_ON_CALLBACK)) {
-          // pushed "LIGHT ON" button...
-          digitalWrite(led, LOW); // ...turn on the LED (inverted logic!)
-          // terminate the callback with an alert message
-          myBot.endQuery(msg.callbackQueryID, "Light on", true);
-        } else if (msg.callbackQueryData.equals(LIGHT_OFF_CALLBACK)) {
-          // pushed "LIGHT OFF" button...
-          digitalWrite(led, HIGH); // ...turn off the LED (inverted logic!)
-          // terminate the callback with a popup message
-          myBot.endQuery(msg.callbackQueryID, "Light off");
-        }
-      }
+    if (CTBotMessageText == myBot.getNewMessage(msg))
+    {  // ...forward it to the sender
+      myBot.sendMessage(msg.sender.id, msg.text);
     }
   }
   // wait 500 milliseconds
