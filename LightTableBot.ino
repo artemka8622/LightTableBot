@@ -46,11 +46,19 @@ int lcount = 0;              //-ANOTHER COUNTING VAR
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
 const char* ssid  =  "mynet3";     // SSID WiFi network
 const char* pass  =  "utsenuta";     // Password  WiFi network
-const char* token =  "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";  // Telegram token   
-                  
+const char* token =  "5474412217:AAG7xnhvtgcQCRsm1EthSDKhILhpRBULU6g";  // Telegram token   
+#include <FastBot.h>
+FastBot bot(BOT_TOKEN);
+
+void newMsg(FB_msg& msg) {
+  Serial.println(msg.toString());
+  bot.sendMessage(msg.text, msg.chatID);  
+}
+
 void setupBot()
 {
-  
+  connectWiFi();
+  bot.attach(newMsg);
 }
 
 int bot_lasttime = 0;
@@ -64,26 +72,16 @@ void loopBot(){
 }
 
 void connectWiFi() {
+  delay(500);
   Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
 
-  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
-     would try to act as both a client and an access-point and could cause
-     network-issues with your other WiFi-devices on your WiFi-network. */
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, pass);
-
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    if (millis() > 15000) ESP.restart();
   }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println("Connected");
 }
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
@@ -143,7 +141,7 @@ void setup() {
 
 void loop() {
   loopBot();
-  loop2();
+  //loop2();
 }
 
 void one_color_all(int cred, int cgrn, int cblu) {       //-SET ALL LEDS TO ONE COLOR
