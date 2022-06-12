@@ -42,47 +42,50 @@ float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#include "CTBot.h"
-#define LIGHT_ON_CALLBACK  "lightON"  // callback data sent when "LIGHT ON" button is pressed
-#define LIGHT_OFF_CALLBACK "lightOFF" // callback data sent when "LIGHT OFF" button is pressed
+#define WIFI_SSID "mynet3"
+#define WIFI_PASS "utsenuta"
+#define BOT_TOKEN "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E"
 
-CTBot myBot;
-CTBotInlineKeyboard myKbd;  // custom inline keyboard object helper
-
-String ssid = "mynet3";     // REPLACE mySSID WITH YOUR WIFI SSID
-String pass = "utsenuta"; // REPLACE myPassword YOUR WIFI PASSWORD, IF ANY
-String token = "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";   // REPLACE myToken WITH YOUR TELEGRAM BOT TOKEN
-uint8_t led = 2;            // the onboard ESP8266 LED.    
-                            // If you have a NodeMCU you can use the BUILTIN_LED pin
-                            // (replace 2 with BUILTIN_LED) 
-                            // ATTENTION: this led use inverted logic
+#include <FastBot.h>
+FastBot bot(BOT_TOKEN);
                             
 void setupBot()
 {
-    // connect the ESP8266 to the desired access point
-  myBot.wifiConnect(ssid, pass);
+  connectWiFi();
 
-  // set the telegram bot token
-  myBot.setTelegramToken(token);
-
-  // check if all things are ok
-  if (myBot.testConnection())
-    Serial.println("\ntestConnection OK");
-  else
-    Serial.println("\ntestConnection NOK");
+  bot.attach(newMsg);
 }
 
+int prev_1 = 0;
 void loopBot(){
-  TBMessage msg;
   int curr_milis = millis();
-  if(curr_milis - prev > 1000)
+  if(curr_milis - prev_1 > 1000)
   {
-    prev = curr_milis;
-    if (CTBotMessageText == myBot.getNewMessage(msg))
-    {  // ...forward it to the sender
-      myBot.sendMessage(msg.sender.id, msg.text);
-    }
+    prev_1 = curr_milis;
+    bot.tick();
   }
+}
+
+// обработчик сообщений
+void newMsg(FB_msg& msg) {
+  // выводим всю информацию о сообщении
+  Serial.println(msg.toString());
+
+  // отправить сообщение обратно
+  bot.sendMessage(msg.text, msg.chatID);  
+}
+
+void connectWiFi() {
+  delay(500);
+  Serial.println();
+
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if (millis() > 15000) ESP.restart();
+  }
+  Serial.println("Connected");
 }
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
@@ -91,14 +94,13 @@ void setup() {
   // initialize the Serial
   Serial.begin(115200);
   
+  connectWiFi();
   LEDS.setBrightness(max_bright);  // ограничить максимальную яркость
   LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
   one_color_all(0, 0, 0);          // погасить все светодиоды
   LEDS.show();                     // отослать команду   
 }
 
-
-int prev = 0;
 void loop() {
   loopBot();
   loop2();
