@@ -43,6 +43,12 @@ int bouncedirection = 0;     //-SWITCH FOR COLOR BOUNCE (0-1)
 float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
+
+int curr_red = 150;
+int curr_green = 100;
+int curr_blue = 100;
+int curr_bright = 200;
+
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
 #define AUTO_MODE  "auto_mode"  // callback data sent when "LIGHT ON" button is pressed
 #define MANUAL_MODE  "manual_mode"  // callback data sent when "LIGHT ON" button is pressed
@@ -69,7 +75,7 @@ FastBot bot(token);
 
 void newMsg(FB_msg& msg) {
   InlineMenu();
-  CheckCommand(msg.toString());
+  CheckCommand(msg.data, msg.text);
   Serial.println(msg.toString());  
 }
 
@@ -106,7 +112,7 @@ void connectWiFi() {
 }
 
 void InlineMenu(){
-  String statusDevice;  
+  String statusDevice = "Cвет " +String(curr_red)+ " green- "+ String(curr_green)+ " blue- "+ String(curr_blue)+ " bright- "+String(curr_bright)+ " mode - " +String(ledMode);  
   String menu1 = String(AUTO_MODE)  + " \t " + String(MANUAL_MODE)  +" \n ";
   String menu2 = String(BLUE_PLUS) + " \t "  + String(BLUE_MINUS) + " \t " + String(BRIGHT_PLUS) + " \t " + String(BRIGHT_MINUS) + " \n ";
   String menu6 = String(RED_PLUS) + " \t "  + String(RED_MINUS) + " \t " + String(GREEN_PLUS) + " \t " + String(GREEN_MINUS) + " \n ";
@@ -116,11 +122,6 @@ void InlineMenu(){
 }
 
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
-
-int curr_red = 150;
-int curr_green = 100;
-int curr_blue = 100;
-int curr_bright = 200;
 
 void UdapteCollor(){
   one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
@@ -161,7 +162,7 @@ void WriteSettings(){
   Serial.println("WriteSettings " + String(curr_red)+ " - "+ String(curr_green)+ " - "+ String(curr_blue)+ " - "+String(curr_bright)+ " - " + String(ledMode));
 }
 
-void CheckCommand(String callbackQueryData){
+void CheckCommand(String callbackQueryData, String  text_){
   if (callbackQueryData.equals(AUTO_MODE)) {
     ledMode = 888;    
     WriteSettings();
@@ -201,28 +202,30 @@ void CheckCommand(String callbackQueryData){
     UdapteCollor();   
     WriteSettings();
   }else if (callbackQueryData.equals(BRIGHT_PLUS)) {
-    curr_bright -= 1; 
+    curr_bright -= 10; 
     UdapteCollor();   
     WriteSettings();
   } else if (callbackQueryData.equals(BRIGHT_MINUS)) {
-    curr_bright += 1; 
+    curr_bright += 10; 
     UdapteCollor();   
     WriteSettings();
   }
-  else if (callbackQueryData.startsWith(COMMAND_LIGTH)) {
+  else if (callbackQueryData.startsWith(text_)) {
     callbackQueryData = callbackQueryData.substring(5);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     int secondClosingBracket = callbackQueryData.indexOf(" ", firstClosingBracket + 1);
     int thirdClosingBracket = callbackQueryData.indexOf(" ", secondClosingBracket + 1);
+    Serial.println(String(firstClosingBracket) + " " + String(secondClosingBracket) +  "  "+ String(thirdClosingBracket));
     String red = callbackQueryData.substring(firstClosingBracket + 1, secondClosingBracket);
     String green = callbackQueryData.substring(secondClosingBracket + 1, thirdClosingBracket);
     String blue = callbackQueryData.substring(thirdClosingBracket + 1);
+    Serial.println(String(red) + " " + String(green) +  "  "+ String(blue));
     curr_red =  red.toInt();
     curr_green =  green.toInt();
     curr_blue =  blue.toInt();
     UdapteCollor();   
     WriteSettings();
-  } else if (callbackQueryData.startsWith(COMMAND_BRIGHT)) {
+  } else if (callbackQueryData.startsWith(text_)) {
     callbackQueryData = callbackQueryData.substring(5);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     String bright = callbackQueryData.substring(firstClosingBracket + 1);
