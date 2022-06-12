@@ -43,14 +43,48 @@ int bouncedirection = 0;     //-SWITCH FOR COLOR BOUNCE (0-1)
 float tcount = 0.0;          //-INC VAR FOR SIN LOOPS
 int lcount = 0;              //-ANOTHER COUNTING VAR
 
+
+int curr_red = 150;
+int curr_green = 100;
+int curr_blue = 100;
+int curr_bright = 200;
+
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
+#define AUTO_MODE  "auto_mode"  // callback data sent when "LIGHT ON" button is pressed
+#define MANUAL_MODE  "manual_mode"  // callback data sent when "LIGHT ON" button is pressed
+#define RED_PLUS  "red_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define RED_MINUS "red_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define GREEN_PLUS  "green_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define GREEN_MINUS "green_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define BLUE_PLUS  "blue_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define BLUE_MINUS "blue_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define BRIGHT_PLUS  "bright_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define BRIGHT_MINUS "bright_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define COMMAND_LIGTH  "light"  // callback data sent when "LIGHT ON" button is pressed
+#define COMMAND_BRIGHT  "bright"  // callback data sent when "LIGHT ON" button is pressed
+#define MODE_NEXT "mode_next" // callback data sent when "LIGHT OFF" button is pressed
+#define MODE_PREV "mode_prev" // callback data sent when "LIGHT OFF" button is pressed
+
 const char* ssid  =  "mynet3";     // SSID WiFi network
 const char* pass  =  "utsenuta";     // Password  WiFi network
-const char* token =  "887034298:AAH3DN8UHe99zCZk6bRtiGTYWzJtpFH3f6E";  // Telegram token   
-                  
+const char* token =  "5474412217:AAG7xnhvtgcQCRsm1EthSDKhILhpRBULU6g";  // Telegram token   
+#define CHAT_ID "294499886"
+
+#include <FastBot.h>
+FastBot bot(token);
+
+void newMsg(FB_msg& msg) {
+  InlineMenu();
+  CheckCommand(msg.data, msg.text);
+  Serial.println(msg.toString());  
+}
+
 void setupBot()
 {
-  
+  connectWiFi();
+  bot.setChatID(CHAT_ID);
+  bot.attach(newMsg);
+  InlineMenu();
 }
 
 int bot_lasttime = 0;
@@ -61,36 +95,39 @@ void loopBot(){
     bot_lasttime = curr_milis;
     Serial.println("CPU load - ");
   }
+  bot.tick();
+  LEDS.show();
 }
 
 void connectWiFi() {
+  delay(500);
   Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
 
-  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
-     would try to act as both a client and an access-point and could cause
-     network-issues with your other WiFi-devices on your WiFi-network. */
-  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pass);
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    if (millis() > 15000) ESP.restart();
   }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println("Connected");
 }
+
+void InlineMenu(){
+  String statusDevice = "Cвет " +String(curr_red)+ " green- "+ String(curr_green)+ " blue- "+ String(curr_blue)+ " bright- "+String(curr_bright)+ " mode - " +String(ledMode);  
+  String menu1 = String(AUTO_MODE)  + " \t " + String(MANUAL_MODE)  +" \n ";
+  String menu2 = String(BLUE_PLUS) + " \t "  + String(BLUE_MINUS) + " \t " + String(BRIGHT_PLUS) + " \t " + String(BRIGHT_MINUS) + " \n ";
+  String menu6 = String(RED_PLUS) + " \t "  + String(RED_MINUS) + " \t " + String(GREEN_PLUS) + " \t " + String(GREEN_MINUS) + " \n ";
+  String menu3 = String(MODE_NEXT) + " \t " + String(MODE_PREV) + " \n ";
+  String menu = menu1 + menu2 + menu6 +menu3;  
+  bot.inlineMenu(statusDevice, menu); 
+}
+
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
-int curr_red = 150;
-int curr_green = 100;
-int curr_blue = 100;
-int curr_bright = 200;
+void UdapteCollor(){
+  one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
+  LEDS.show(); 
+}
 
 void ReadSettings(){
   int position_ = 0;
@@ -126,6 +163,80 @@ void WriteSettings(){
   Serial.println("WriteSettings " + String(curr_red)+ " - "+ String(curr_green)+ " - "+ String(curr_blue)+ " - "+String(curr_bright)+ " - " + String(ledMode));
 }
 
+void CheckCommand(String callbackQueryData, String  text_){
+  Serial.println(text_);  
+  if (callbackQueryData.equals(AUTO_MODE)) {
+    ledMode = 888;    
+    WriteSettings();
+  } else  if (callbackQueryData.equals(MANUAL_MODE)) {
+    ledMode = 1;    
+    WriteSettings(); 
+  } else  if (callbackQueryData.equals(RED_PLUS)) {
+    curr_red += 10; 
+    UdapteCollor();   
+    WriteSettings();
+  } else if (callbackQueryData.equals(RED_MINUS)) {
+    curr_red += 10; 
+    UdapteCollor();   
+    WriteSettings();
+  } else  if (callbackQueryData.equals(GREEN_PLUS)) {
+    curr_green += 10; 
+    UdapteCollor();   
+    WriteSettings();
+  } else  if (callbackQueryData.equals(GREEN_MINUS)) {
+    curr_green -= 10; 
+    UdapteCollor();   
+    WriteSettings();
+  }  else  if (callbackQueryData.equals(BLUE_PLUS)) {
+    curr_blue += 10; 
+    UdapteCollor();   
+    WriteSettings();
+  } else  if (callbackQueryData.equals(BLUE_MINUS)) {
+    curr_blue -= 10; 
+    UdapteCollor();   
+    WriteSettings();
+  } else if (callbackQueryData.equals(MODE_PREV)) {
+    ledMode -= 1; 
+    UdapteCollor();   
+    WriteSettings();
+  } else if (callbackQueryData.equals(MODE_NEXT)) {
+    ledMode += 1; 
+    UdapteCollor();   
+    WriteSettings();
+  }else if (callbackQueryData.equals(BRIGHT_PLUS)) {
+    curr_bright -= 10; 
+    UdapteCollor();   
+    WriteSettings();
+  } else if (callbackQueryData.equals(BRIGHT_MINUS)) {
+    curr_bright += 10; 
+    UdapteCollor();   
+    WriteSettings();
+  }
+  else if (text_.startsWith(COMMAND_LIGTH)) {
+    callbackQueryData = text_.substring(5);   
+    int firstClosingBracket = callbackQueryData.indexOf(" ");
+    int secondClosingBracket = callbackQueryData.indexOf(" ", firstClosingBracket + 1);
+    int thirdClosingBracket = callbackQueryData.indexOf(" ", secondClosingBracket + 1);
+    Serial.println(String(firstClosingBracket) + " " + String(secondClosingBracket) +  "  "+ String(thirdClosingBracket));
+    String red = callbackQueryData.substring(firstClosingBracket + 1, secondClosingBracket);
+    String green = callbackQueryData.substring(secondClosingBracket + 1, thirdClosingBracket);
+    String blue = callbackQueryData.substring(thirdClosingBracket + 1);
+    Serial.println(String(red) + " " + String(green) +  "  "+ String(blue));
+    curr_red =  red.toInt();
+    curr_green =  green.toInt();
+    curr_blue =  blue.toInt();
+    UdapteCollor();   
+    WriteSettings();
+  } else if (text_.startsWith(COMMAND_BRIGHT)) {
+    callbackQueryData = text_.substring(5);   
+    int firstClosingBracket = callbackQueryData.indexOf(" ");
+    String bright = callbackQueryData.substring(firstClosingBracket + 1);
+    curr_bright =  bright.toInt();
+    UdapteCollor();   
+    WriteSettings();
+  }
+}
+
 void setup() {
   // initialize the Serial
   delay(500);
@@ -134,16 +245,13 @@ void setup() {
   ReadSettings();
   LEDS.setBrightness(curr_bright);  // ограничить максимальную яркость
   LEDS.addLeds<WS2812, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
-  one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
-  LEDS.show(); 
-    
-  connectWiFi();
+  UdapteCollor();
   setupBot();  
 }
 
 void loop() {
   loopBot();
-  loop2();
+  //loop2();
 }
 
 void one_color_all(int cred, int cgrn, int cblu) {       //-SET ALL LEDS TO ONE COLOR
