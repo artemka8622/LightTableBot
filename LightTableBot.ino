@@ -96,6 +96,7 @@ void loopBot(){
     Serial.println("CPU load - ");
   }
   bot.tick();
+  LEDS.show();
 }
 
 void connectWiFi() {
@@ -163,6 +164,7 @@ void WriteSettings(){
 }
 
 void CheckCommand(String callbackQueryData, String  text_){
+  Serial.println(text_);  
   if (callbackQueryData.equals(AUTO_MODE)) {
     ledMode = 888;    
     WriteSettings();
@@ -210,8 +212,8 @@ void CheckCommand(String callbackQueryData, String  text_){
     UdapteCollor();   
     WriteSettings();
   }
-  else if (callbackQueryData.startsWith(text_)) {
-    callbackQueryData = callbackQueryData.substring(5);   
+  else if (text_.startsWith(COMMAND_LIGTH)) {
+    callbackQueryData = text_.substring(5);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     int secondClosingBracket = callbackQueryData.indexOf(" ", firstClosingBracket + 1);
     int thirdClosingBracket = callbackQueryData.indexOf(" ", secondClosingBracket + 1);
@@ -225,8 +227,8 @@ void CheckCommand(String callbackQueryData, String  text_){
     curr_blue =  blue.toInt();
     UdapteCollor();   
     WriteSettings();
-  } else if (callbackQueryData.startsWith(text_)) {
-    callbackQueryData = callbackQueryData.substring(5);   
+  } else if (text_.startsWith(COMMAND_BRIGHT)) {
+    callbackQueryData = text_.substring(5);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     String bright = callbackQueryData.substring(firstClosingBracket + 1);
     curr_bright =  bright.toInt();
