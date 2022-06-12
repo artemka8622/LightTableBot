@@ -51,8 +51,6 @@ FastBot bot(BOT_TOKEN);
                             
 void setupBot()
 {
-  connectWiFi();
-  bot.attach(newMsg);
 }
 
 int prev_1 = 0;
@@ -61,17 +59,7 @@ void loopBot(){
   if(curr_milis - prev_1 > 1000)
   {
     prev_1 = curr_milis;
-    bot.tick();
   }
-}
-
-// обработчик сообщений
-void newMsg(FB_msg& msg) {
-  // выводим всю информацию о сообщении
-  Serial.println(msg.toString());
-
-  // отправить сообщение обратно
-  bot.sendMessage(msg.text, msg.chatID);  
 }
 
 void connectWiFi() {
