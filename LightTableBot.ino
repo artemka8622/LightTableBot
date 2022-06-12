@@ -56,30 +56,41 @@ void setupBot()
 int bot_lasttime = 0;
 void loopBot(){
   int curr_milis = millis();
-  if (millis() - bot_lasttime > 1000)
+  if (curr_milis - bot_lasttime > 1000)
   {
-
+    bot_lasttime = curr_milis;
+    Serial.println("CPU load - ");
   }
 }
 
 void connectWiFi() {
   Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
 
+  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
+     would try to act as both a client and an access-point and could cause
+     network-issues with your other WiFi-devices on your WiFi-network. */
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pass);
-  delay(500);
+
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.print('.');
     delay(500);
+    Serial.print(".");
   }
-  Serial.println("Connected");
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 /*++++++++++++++++++++++++++BOT END++++++++++++++++++++++++++++++++++++++++++++++*/
 
-int curr_red = 0;
-int curr_green = 0;
-int curr_blue = 0;
-int curr_bright = 0;
+int curr_red = 150;
+int curr_green = 100;
+int curr_blue = 100;
+int curr_bright = 200;
 
 void ReadSettings(){
   int position_ = 0;
@@ -88,39 +99,46 @@ void ReadSettings(){
   curr_green = EEPROM.read(position_);
   position_ += sizeof(curr_red);
   curr_blue = EEPROM.read(position_);
-  position_ += sizeof(curr_red);
-  
+  position_ += sizeof(curr_red);  
   curr_bright = EEPROM.read(position_);
   position_ += sizeof(curr_bright);
-  ledMode = EEPROM.read(position_);  
+  EEPROM.get(position_, ledMode);  
+  Serial.println("ReadSettings red-" +String(curr_red)+ " green- "+ String(curr_green)+ " blue- "+ String(curr_blue)+ " bright- "+String(curr_bright)+ " mode - " +String(ledMode));
 }
 
 void WriteSettings(){
   int position_ = 0;
-  EEPROM.write(position_, curr_red);
+  EEPROM.put(position_, curr_red);
   position_ += sizeof(curr_red);
-  EEPROM.write(position_,curr_green);
+  EEPROM.put(position_,curr_green);
   position_ += sizeof(curr_red);
-  EEPROM.write(position_,curr_blue);
+  EEPROM.put(position_,curr_blue);
   position_ += sizeof(curr_red);  
-  EEPROM.write(position_,curr_bright);
+  EEPROM.put(position_,curr_bright);  
   position_ += sizeof(curr_bright);
-  EEPROM.write(position_, ledMode);  
-  EEPROM.commit();
+  EEPROM.put(position_, ledMode);  
+  delay(500);
+  if (EEPROM.commit()) {
+    Serial.println("EEPROM successfully committed");
+  } else {
+    Serial.println("ERROR! EEPROM commit failed");
+  }
+  Serial.println("WriteSettings " + String(curr_red)+ " - "+ String(curr_green)+ " - "+ String(curr_blue)+ " - "+String(curr_bright)+ " - " + String(ledMode));
 }
 
 void setup() {
   // initialize the Serial
+  delay(500);
   Serial.begin(115200);
   EEPROM.begin(512);
   ReadSettings();
   LEDS.setBrightness(curr_bright);  // ограничить максимальную яркость
-  LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
+  LEDS.addLeds<WS2812, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
   one_color_all(curr_red, curr_green, curr_blue);          // погасить все светодиоды
   LEDS.show(); 
-  
+    
   connectWiFi();
-  setupBot();
+  setupBot();  
 }
 
 void loop() {
@@ -135,12 +153,6 @@ void one_color_all(int cred, int cgrn, int cblu) {       //-SET ALL LEDS TO ONE 
 }
 
 void loop2() {
-  if (millis() - last_change > change_time) {
-    change_time = random(5000, 20000);                // получаем новое случайное время до следующей смены режима
-    ledMode = fav_modes[random(0, num_modes - 1)];    // получаем новый случайный номер следующего режима
-    change_mode(ledMode);                             // меняем режим через change_mode (там для каждого режима стоят цвета и задержки)
-    last_change = millis();
-  }
   switch (ledMode) {
     case 999: break;                           // пазуа
     case  2: rainbow_fade(); break;            // плавная смена цветов всей ленты
