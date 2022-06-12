@@ -96,41 +96,45 @@ void setup() {
 }
 
 
-
+int prev = 0;
 void loop() {
     // a variable to store telegram message data
   TBMessage msg;
-
-  // if there is an incoming message...
-  if (myBot.getNewMessage(msg)) {
-    // check what kind of message I received
-    if (msg.messageType == CTBotMessageText) {
-      // received a text message
-      if (msg.text.equalsIgnoreCase("show keyboard")) {
-        // the user is asking to show the inline keyboard --> show it
-        myBot.sendMessage(msg.sender.id, "Inline Keyboard", myKbd);
-      }
-      else {
-        // the user write anithing else --> show a hint message
-        myBot.sendMessage(msg.sender.id, "Try 'show keyboard'");
-      }
-    } else if (msg.messageType == CTBotMessageQuery) {
-      // received a callback query message
-      if (msg.callbackQueryData.equals(LIGHT_ON_CALLBACK)) {
-        // pushed "LIGHT ON" button...
-        digitalWrite(led, LOW); // ...turn on the LED (inverted logic!)
-        // terminate the callback with an alert message
-        myBot.endQuery(msg.callbackQueryID, "Light on", true);
-      } else if (msg.callbackQueryData.equals(LIGHT_OFF_CALLBACK)) {
-        // pushed "LIGHT OFF" button...
-        digitalWrite(led, HIGH); // ...turn off the LED (inverted logic!)
-        // terminate the callback with a popup message
-        myBot.endQuery(msg.callbackQueryID, "Light off");
+  int curr_milis = millis();
+  if(curr_milis - prev > 1000)
+  {
+    prev = curr_milis;
+    // if there is an incoming message...
+    if (myBot.getNewMessage(msg)) {
+      // check what kind of message I received
+      if (msg.messageType == CTBotMessageText) {
+        // received a text message
+        if (msg.text.equalsIgnoreCase("show keyboard")) {
+          // the user is asking to show the inline keyboard --> show it
+          myBot.sendMessage(msg.sender.id, "Inline Keyboard", myKbd);
+        }
+        else {
+          // the user write anithing else --> show a hint message
+          myBot.sendMessage(msg.sender.id, "Try 'show keyboard'");
+        }
+      } else if (msg.messageType == CTBotMessageQuery) {
+        // received a callback query message
+        if (msg.callbackQueryData.equals(LIGHT_ON_CALLBACK)) {
+          // pushed "LIGHT ON" button...
+          digitalWrite(led, LOW); // ...turn on the LED (inverted logic!)
+          // terminate the callback with an alert message
+          myBot.endQuery(msg.callbackQueryID, "Light on", true);
+        } else if (msg.callbackQueryData.equals(LIGHT_OFF_CALLBACK)) {
+          // pushed "LIGHT OFF" button...
+          digitalWrite(led, HIGH); // ...turn off the LED (inverted logic!)
+          // terminate the callback with a popup message
+          myBot.endQuery(msg.callbackQueryID, "Light off");
+        }
       }
     }
   }
   // wait 500 milliseconds
-  delay(500);
+  //delay(500);
   loop2();
 }
 
