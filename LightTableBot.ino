@@ -50,24 +50,41 @@ int curr_blue = 100;
 int curr_bright = 200;
 
 /*++++++++++++++++++++++++++BOT++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#define AUTO_MODE  "auto_mode"  // callback data sent when "LIGHT ON" button is pressed
-#define MANUAL_MODE  "manual_mode"  // callback data sent when "LIGHT ON" button is pressed
-#define RED_PLUS  "red_plus"  // callback data sent when "LIGHT ON" button is pressed
-#define RED_MINUS "red_minus" // callback data sent when "LIGHT OFF" button is pressed
-#define GREEN_PLUS  "green_plus"  // callback data sent when "LIGHT ON" button is pressed
-#define GREEN_MINUS "green_minus" // callback data sent when "LIGHT OFF" button is pressed
-#define BLUE_PLUS  "blue_plus"  // callback data sent when "LIGHT ON" button is pressed
-#define BLUE_MINUS "blue_minus" // callback data sent when "LIGHT OFF" button is pressed
-#define BRIGHT_PLUS  "bright_plus"  // callback data sent when "LIGHT ON" button is pressed
-#define BRIGHT_MINUS "bright_minus" // callback data sent when "LIGHT OFF" button is pressed
-#define COMMAND_LIGTH  "light"  // callback data sent when "LIGHT ON" button is pressed
-#define COMMAND_BRIGHT  "bright"  // callback data sent when "LIGHT ON" button is pressed
-#define MODE_NEXT "mode_next" // callback data sent when "LIGHT OFF" button is pressed
-#define MODE_PREV "mode_prev" // callback data sent when "LIGHT OFF" button is pressed
+#define AUTO_MODE  "/auto_mode"  // callback data sent when "LIGHT ON" button is pressed
+#define MANUAL_MODE  "/manual_mode"  // callback data sent when "LIGHT ON" button is pressed
+#define RED_PLUS  "/red_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define RED_MINUS "/red_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define GREEN_PLUS / "green_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define GREEN_MINUS "/green_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define BLUE_PLUS  "/blue_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define BLUE_MINUS "/blue_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define BRIGHT_PLUS  /"bright_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define BRIGHT_MINUS "/bright_minus" // callback data sent when "LIGHT OFF" button is pressed
+#define COMMAND_LIGTH  "/light"  // callback data sent when "LIGHT ON" button is pressed
+#define COMMAND_BRIGHT  "/bright"  // callback data sent when "LIGHT ON" button is pressed
+#define MODE_NEXT "/mode_next" // callback data sent when "LIGHT OFF" button is pressed
+#define MODE_PREV "/mode_prev" // callback data sent when "LIGHT OFF" button is pressed
+/*
+auto_mode - автоматичский режим по кругу эффекты
+manual_mode - ручной режим led_mode  1
+red_plus - прибавляем красного
+red_minus - убавляемы красного
+green_plus - зеленый
+green_minus - зеленый минус
+blue_plus - синий плюч
+blue_minus - синий минус
+bright_plus - яркость больше
+bright_minus - яркость меньше
+light - режим света через запятую red green blue /light 1 1 1
+bright - яркость /bright 120
+mode_next - переключение режимов
+mode_prev - режим назад
+*/
+
 
 const char* ssid  =  "mynet3";     // SSID WiFi network
 const char* pass  =  "utsenuta";     // Password  WiFi network
-const char* token =  "5474412217:AAG7xnhvtgcQCRsm1EthSDKhILhpRBULU6g";  // Telegram token   
+const char* token =  "1738913673:AAFSA5p2q0m6HVROp0tl7scgcbtQg9GfKqY";  // Telegram token   
 #define CHAT_ID "294499886"
 
 #include <FastBot.h>
@@ -213,7 +230,7 @@ void CheckCommand(String callbackQueryData, String  text_){
     WriteSettings();
   }
   else if (text_.startsWith(COMMAND_LIGTH)) {
-    callbackQueryData = text_.substring(5);   
+    callbackQueryData = text_.substring(6);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     int secondClosingBracket = callbackQueryData.indexOf(" ", firstClosingBracket + 1);
     int thirdClosingBracket = callbackQueryData.indexOf(" ", secondClosingBracket + 1);
@@ -228,7 +245,7 @@ void CheckCommand(String callbackQueryData, String  text_){
     UdapteCollor();   
     WriteSettings();
   } else if (text_.startsWith(COMMAND_BRIGHT)) {
-    callbackQueryData = text_.substring(5);   
+    callbackQueryData = text_.substring(6);   
     int firstClosingBracket = callbackQueryData.indexOf(" ");
     String bright = callbackQueryData.substring(firstClosingBracket + 1);
     curr_bright =  bright.toInt();
