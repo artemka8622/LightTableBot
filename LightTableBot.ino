@@ -1,5 +1,5 @@
 #include "FastLED.h"          // библиотека для работы с лентой
-#define LED_COUNT 104          // число светодиодов в кольце/ленте
+#define LED_COUNT 504          // число светодиодов в кольце/ленте
 #define LED_DT 4             // пин, куда подключен DIN ленты
 #include <ESP8266WiFi.h>
 #include <EEPROM.h>
@@ -54,11 +54,11 @@ int curr_bright = 200;
 #define MANUAL_MODE  "/manual_mode"  // callback data sent when "LIGHT ON" button is pressed
 #define RED_PLUS  "/red_plus"  // callback data sent when "LIGHT ON" button is pressed
 #define RED_MINUS "/red_minus" // callback data sent when "LIGHT OFF" button is pressed
-#define GREEN_PLUS / "green_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define GREEN_PLUS  "/green_plus"  // callback data sent when "LIGHT ON" button is pressed
 #define GREEN_MINUS "/green_minus" // callback data sent when "LIGHT OFF" button is pressed
 #define BLUE_PLUS  "/blue_plus"  // callback data sent when "LIGHT ON" button is pressed
 #define BLUE_MINUS "/blue_minus" // callback data sent when "LIGHT OFF" button is pressed
-#define BRIGHT_PLUS  /"bright_plus"  // callback data sent when "LIGHT ON" button is pressed
+#define BRIGHT_PLUS  "/bright_plus"  // callback data sent when "LIGHT ON" button is pressed
 #define BRIGHT_MINUS "/bright_minus" // callback data sent when "LIGHT OFF" button is pressed
 #define COMMAND_LIGTH  "/light"  // callback data sent when "LIGHT ON" button is pressed
 #define COMMAND_BRIGHT  "/bright"  // callback data sent when "LIGHT ON" button is pressed
@@ -263,6 +263,11 @@ void setup() {
   LEDS.setBrightness(curr_bright);  // ограничить максимальную яркость
   LEDS.addLeds<WS2812, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
   UdapteCollor();
+  delay(500);
+  UdapteCollor();
+  delay(500);
+   LEDS.show();
+   
   setupBot();  
 }
 
